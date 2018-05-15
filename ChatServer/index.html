@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+    <head>
+        <title>React Native / Socket.IO Chat</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }    
+            body { font: 13px Helvetica, Arial; }
+            form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+            form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+            form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+            #messages { list-style-type: none; margin: 0; padding: 0 }
+            #messages li { padding: 5px 10px; }
+            #messages li:nth-child(odd) { background: #eee; }
+        </style>
+    </head>
+    <body>
+        <ul id="messages"></ul>
+        <form action="">
+            <input id="m" autocomplete="off" /><button>Send</button>
+        </form>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script>
+            $(function() {
+                var socket = io();
+                $('form').submit(function() {
+                    var message = $('#m').val();
+
+                    if(message.startsWith('name=')) {
+                        var name = message.slice(message.indexOf('=') + 1);
+                        socket.emit('name', name);
+                        $('#m').val('');
+                        return false;
+                    }
+
+                    socket.emit('chat message', $('#m').val());
+                    $('#m').val('');
+                    return false;
+                });
+
+                socket.on('user connected', function(message) {
+                    $('#messages').append($('<li>').html('<b>' + message.name + '</b> connected'));
+                });
+
+                socket.on('chat message', function(message) {
+                    $('#messages').append($('<li>').html('<b>' + message.name + '</b>: ' + message.message));
+                });
+
+                socket.on('name', function(message) {
+                    $('#messages').append($('<li>').html('<b>' + message.oldName + '</b> became <b>' + message.newName + '</b>'));
+                });
+
+                socket.on('user disconnected', function(message) {
+                    $('#messages').append($('<li>').html('<b>' + message.name + '</b> disconnected'));
+                });
+            });
+        </script>
+    </body>
+</html>
